@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+<head>
+    <title>VK Stats</title>
+    <link href="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/themes/base/jquery-ui.css" rel="stylesheet" type="text/css"/>
+    <link href="{{ url_for('static', filename='style.css') }}" rel="stylesheet" type="text/css"/>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jqueryui/1.8/jquery-ui.min.js"></script>
+    <script type="text/javascript">
+        $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+    </script>
+    <script type="text/javascript" src="{{ url_for('static', filename='main.js') }}"></script>
+</head>
+<body>
+    <h1>Select filters:</h1>
+
+    <div>
+    <p><input type="checkbox" name="bydate" />By date</p>
+    <div id="bydate" style="display:none;">
+        <p>Select date:</p>
+        <div id="datepicker"></div>
+    </div>
+    </div>
+
+    <div>
+    <p><input type="checkbox" name="byjid" />By nick/name</p>
+    <div id="byjid" style="display:none;overflow:scroll;height:500px;">
+        <p>Select nick:</p>
+    </div>
+    </div>
+
+    <a href="#" id="go">Go!</a>
+    <div id="stats"></div>
+</body>
+</html>
+
+{# vim:ft=htmldjango
+#}

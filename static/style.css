@@ -1,0 +1,21 @@
+table {
+    background-color: #F4F8FE;
+    color: #2291BE;
+    width: 100%;
+}
+tr:hover {
+    color: #F6921E;
+}
+td.left {
+    width: 80%;
+}
+td.right {
+    width: 20%;
+}
+div#stats {
+    width: 50%;
+}
+a.jid {
+    color: blue;
+    text-decoration: none;
+}
