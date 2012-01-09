@@ -49,7 +49,7 @@ def get_stats():
             date = date.split()[0] #Remove 00:00:00 time component
             online = online.split()[1] #Remove 1900-01-01 date component
             if date in stats_r:
-                stats_r[date].append((jid, online)
+                stats_r[date].append((jid, online))
             else:
                 stats_r[date] = [(jid, online)]
         jids_r = g.db.execute("SELECT jid, name FROM jids WHERE jid in ({})".format(jids_placeholder), json_request["jids"])
