@@ -34,7 +34,6 @@ $(document).ready(function() {
                 selected_jids.splice(index, 1);
                 $(this).css("color", "blue");
             }
-            alert(selected_jids.join('\n'));
         });
     });
     $("#go").click(function(){
