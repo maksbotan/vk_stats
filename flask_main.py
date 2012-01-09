@@ -36,10 +36,10 @@ def get_jids():
 @app.route("/_get_stats", methods=['POST'])
 def get_stats():
     json_request = json.loads(request.form["request"], encoding="utf-8")
-    stats_r = {}
+    stats = {}
     jids = {}
     if "jids" in json_request:
-        jids_placeholder = ",".join(["?"]*len(json_request["jids"]))
+        jids_placeholder = ",".join("?" * len(json_request["jids"]))
         records = g.db.execute("SELECT date, jid, online FROM logs WHERE \
                                 jid in ({}) AND online != \"1900-01-01 00:00:00\" \
                                 ORDER BY date, online DESC".format(jids_placeholder),
@@ -48,22 +48,13 @@ def get_stats():
         for date, jid, online in records:
             date = date.split()[0] #Remove 00:00:00 time component
             online = online.split()[1] #Remove 1900-01-01 date component
-            if date in stats_r:
-                stats_r[date].append((jid, online))
-            else:
-                stats_r[date] = [(jid, online)]
+            stats.setdefault(date, []).append((jid, online))
         jids_r = g.db.execute("SELECT jid, name FROM jids WHERE jid in ({})".format(jids_placeholder), json_request["jids"])
         #Make {jid: [list of names]}
         for jid, name in jids_r:
-            if jid in jids:
-                jids[jid].append(name)
-            else:
-                jids[jid] = [name]
-        stats = []
-        #Pack dict to [(date, (jid, online))] list of tuples
-        for date, entry in sorted(stats_r.items()):
-            stats.append((date, entry))
+            jids.setdefault(jid, []).append(name)
 
-        return jsonify(stats=stats, jids=jids)
+        #Return stats as [(date, (jid, online))] list of tuples
+        return jsonify(stats=sorted(stats.items()), jids=jids)
 if __name__ == "__main__":
     app.run(debug=True)
