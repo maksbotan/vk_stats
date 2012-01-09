@@ -44,21 +44,26 @@ def get_stats():
                                 jid in ({}) AND online != \"1900-01-01 00:00:00\" \
                                 ORDER BY date, online DESC".format(jids_placeholder),
                                 json_request["jids"])
+        #Make {date: [list of (jid, online)]}
         for date, jid, online in records:
-            date = date.split()[0];
+            date = date.split()[0] #Remove 00:00:00 time component
+            online = online.split()[1] #Remove 1900-01-01 date component
             if date in stats_r:
-                stats_r[date].append((jid, online.split()[1]))
+                stats_r[date].append((jid, online)
             else:
-                stats_r[date] = [(jid, online.split()[1])]
+                stats_r[date] = [(jid, online)]
         jids_r = g.db.execute("SELECT jid, name FROM jids WHERE jid in ({})".format(jids_placeholder), json_request["jids"])
+        #Make {jid: [list of names]}
         for jid, name in jids_r:
             if jid in jids:
                 jids[jid].append(name)
             else:
                 jids[jid] = [name]
         stats = []
+        #Pack dict to [(date, (jid, online))] list of tuples
         for date, entry in sorted(stats_r.items()):
             stats.append((date, entry))
+
         return jsonify(stats=stats, jids=jids)
 if __name__ == "__main__":
     app.run(debug=True)
