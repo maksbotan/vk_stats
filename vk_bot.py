@@ -12,11 +12,7 @@ fmt = logging.Formatter('%(levelname)s:%(name)s:%(message)s')
 
 #SleekXMPP logger configuration
 sleeklogger = logging.getLogger('sleekxmpp')
-sleeklogger.setLevel(logging.DEBUG)
-ch = logging.StreamHandler()
-ch.setFormatter(fmt)
-ch.setLevel(logging.INFO)
-sleeklogger.addHandler(ch)
+sleeklogger.setLevel(logging.INFO)
 
 try:
     from gevent.monkey import patch_socket
@@ -141,6 +137,19 @@ if __name__ == '__main__':
     vk_id = raw_input('Vk id: ')
     vk_pass = getpass.getpass('Password: ')
 
+    if args.daemon:
+        fh = logging.FileHandler("vk_bot.log", "w")
+        fh.setFormatter(fmt)
+        fh.setLevel(logging.INFO)
+        logger.addHandler(fh)
+        sleeklogger.addHandler(fh)
+    else:
+        ch = logging.StreamHandler()
+        ch.setFormatter(fmt)
+        ch.setLevel(logging.INFO)
+        logger.addHandler(ch)
+        sleeklogger.addHandler(ch)
+
     if args.debug:
         sleeklogger.setLevel(logging.DEBUG)
         logger.setLevel(logging.DEBUG)
@@ -153,15 +162,9 @@ if __name__ == '__main__':
         if args.daemon:
             pid = os.fork()
             if pid:
-                logger.info('Forked to background, pid {}'.format(pid))
+                print ('Forked to background, pid {}'.format(pid))
+                open('vk_stats.pid', 'w').write(str(pid) + '\n')
                 sys.exit(0)
-            fh = logging.FileHandler("vk_bot.log", "w")
-            fh.setFormatter(fmt)
-            logger.addHandler(fh)
-        else:
-            ch = logging.StreamHandler()
-            ch.setFormatter(fmt)
-            logger.addHandler(ch)
         xmpp.process(block=True)
     else:
         logger.error("Unable to connect!")

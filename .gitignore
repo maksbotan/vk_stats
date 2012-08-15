@@ -3,6 +3,7 @@
 *.log
 *.cfg
 *.debug
+*.pid
 logs/
 oldlogs/
 *.tar.bz2
