@@ -9,9 +9,6 @@ from copy import deepcopy
 logger = logging.getLogger('VkBot')
 logger.setLevel(logging.INFO)
 fmt = logging.Formatter('%(levelname)s:%(name)s:%(message)s')
-ch = logging.StreamHandler()
-ch.setFormatter(fmt)
-logger.addHandler(ch)
 
 #SleekXMPP logger configuration
 sleeklogger = logging.getLogger('sleekxmpp')
@@ -140,6 +137,7 @@ class VkBot(sleekxmpp.ClientXMPP):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Vkontakte bot')
     parser.add_argument('--logdir', help='Directory for storing logs', default='logs')
+    parser.add_argument('-d', '--daemon', help='Daemonize', action='store_true', default=False)
     args = parser.parse_args()
 
     vk_id = raw_input('Vk id: ')
@@ -147,6 +145,18 @@ if __name__ == '__main__':
 
     xmpp = VkBot('{}@vk.com'.format(vk_id), vk_pass, args.logdir)
     if xmpp.connect():
+        if args.daemon:
+            pid = os.fork()
+            if pid:
+                logger.info('Forked to background, pid {}'.format(pid))
+                sys.exit(0)
+            fh = logging.FileHandler("vk_bot.log", "w")
+            fh.setFormatter(fmt)
+            logger.addHandler(fh)
+        else:
+            ch = logging.StreamHandler()
+            ch.setFormatter(fmt)
+            logger.addHandler(ch)
         xmpp.process(block=True)
     else:
         logger.error("Unable to connect!")
