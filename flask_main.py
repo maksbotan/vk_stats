@@ -8,6 +8,8 @@ LOGDIR = 'logs'
 
 app = Flask(__name__)
 app.config.from_object(__name__)
+if os.path.exists("flask.cfg"):
+    app.config.from_pyfile("flask.cfg")
 
 log_re = re.compile(r'log-(\d{8}).json')
 
@@ -30,7 +32,7 @@ def get_stats():
 
     result = []
     for entry in sorted(log.values(), key=lambda x: x['online'], reverse=True):
-        online = timedelta(seconds=entry['online'])
+        online = timedelta(seconds=int(entry['online']))
         result.append((entry['name'], str(online)))
 
     return jsonify(result='ok', data=result)

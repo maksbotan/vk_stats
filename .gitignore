@@ -1,5 +1,8 @@
 *.swp
 *.pyc
+*.log
+*.cfg
+*.debug
 logs/
 oldlogs/
 *.tar.bz2
