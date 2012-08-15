@@ -12,25 +12,12 @@
     <script type="text/javascript" src="{{ url_for('static', filename='main.js') }}"></script>
 </head>
 <body>
-    <h1>Select filters:</h1>
+    <h1>Select date:</h1>
+    <div id="datepicker"></div>
 
-    <div>
-    <p><input type="checkbox" name="bydate" />By date</p>
-    <div id="bydate" style="display:none;">
-        <p>Select date:</p>
-        <div id="datepicker"></div>
-    </div>
-    </div>
-
-    <div>
-    <p><input type="checkbox" name="byjid" />By nick/name</p>
-    <div id="byjid" style="display:none;overflow:scroll;height:500px;">
-        <p>Select nick:</p>
-    </div>
-    </div>
-
-    <a href="#" id="go">Go!</a>
+    <input type="button" id="go" value="Go"/>
     <div id="stats"></div>
+    <div id="error"></div>
 </body>
 </html>
 

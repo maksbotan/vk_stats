@@ -1,60 +1,48 @@
 #!/usr/bin/env python
 
-import sqlite3
+import os, re, time
+from datetime import datetime, timedelta
 from flask import Flask, request, g, render_template, jsonify, json
 
-DATABASE = "logs.db"
+LOGDIR = 'logs'
 
 app = Flask(__name__)
 app.config.from_object(__name__)
 
-def connect_db():
-    return sqlite3.connect(app.config['DATABASE'])
-
-@app.before_request
-def before_request():
-    g.db = connect_db()
-
-@app.teardown_request
-def teardown_request(exception):
-    g.db.close()
+log_re = re.compile(r'log-(\d{8}).json')
 
 @app.route("/")
 def index():
     return render_template("main.htm")
 
-@app.route("/_get_jids")
-def get_jids():
-    db_jids = map(lambda x: x[0], g.db.execute("SELECT DISTINCT jid FROM jids"))
-    jids = {}
-    for jid in db_jids:
-        names = map(lambda x: x[0], g.db.execute("SELECT name from jids WHERE jid = ?", (jid,)))
-        jids[jid] = names
-
-    return jsonify(jids)
-
-@app.route("/_get_stats", methods=['POST'])
+@app.route("/_get_stats")
 def get_stats():
-    json_request = json.loads(request.form["request"], encoding="utf-8")
-    stats = {}
-    jids = {}
-    if "jids" in json_request:
-        jids_placeholder = ",".join("?" * len(json_request["jids"]))
-        records = g.db.execute("SELECT date, jid, online FROM logs WHERE \
-                                jid in ({}) AND online != \"1900-01-01 00:00:00\" \
-                                ORDER BY date, online DESC".format(jids_placeholder),
-                                json_request["jids"])
-        #Make {date: [list of (jid, online)]}
-        for date, jid, online in records:
-            date = date.split()[0] #Remove 00:00:00 time component
-            online = online.split()[1] #Remove 1900-01-01 date component
-            stats.setdefault(date, []).append((jid, online))
-        jids_r = g.db.execute("SELECT jid, name FROM jids WHERE jid in ({})".format(jids_placeholder), json_request["jids"])
-        #Make {jid: [list of names]}
-        for jid, name in jids_r:
-            jids.setdefault(jid, []).append(name)
+    if not 'date' in request.args:
+        return jsonify(result='error', message='Required "date" argument not supplied')
+    date = request.args['date']
+    logfile = os.path.join(app.config['LOGDIR'], 'log-{}.json'.format(date))
+    if not os.path.exists(logfile):
+        return jsonify(result='error', message='No logs for selected date')
+    try:
+        log = json.load(open(logfile, 'r'), encoding='utf8')
+    except Exception as e:
+        return jsonify(result='error', message=e.message)
 
-        #Return stats as [(date, (jid, online))] list of tuples
-        return jsonify(stats=sorted(stats.items()), jids=jids)
+    result = []
+    for entry in sorted(log.values(), key=lambda x: x['online'], reverse=True):
+        online = timedelta(seconds=entry['online'])
+        result.append((entry['name'], str(online)))
+
+    return jsonify(result='ok', data=result)
+
+@app.route("/_get_info")
+def get_info():
+    logs = sorted(os.listdir(app.config['LOGDIR']))
+    first, last = logs[0], logs[-1]
+    first_date = time.mktime(time.strptime(first, "log-%Y%m%d.json"))
+    last_date = time.mktime(time.strptime(last, "log-%Y%m%d.json"))
+
+    return jsonify(first=first_date, last=last_date)
+
 if __name__ == "__main__":
     app.run(debug=True)

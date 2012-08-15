@@ -1,67 +1,45 @@
-var selected_jids = [];
-$(document).ready(function() {
+$(function(){
     $("#datepicker").datepicker({
         firstDay: 1,
         dateFormat: "dd-mm-yy"
     });
-    $("input[name=bydate]").bind("change", function(){
-        $("#bydate").toggle("blind", {direction: "vertical"});
-    });
-    $("input[name=byjid]").bind("change", function(){
-        $("#byjid").toggle("blind", {direction: "vertical"});
-    });
-    $.getJSON($SCRIPT_ROOT + '/_get_jids', function(data){
-        var jids = [];
-        $.each(data, function(key, value){
-            jids.push('<li><a href="#" class="jid" id="' + key + '">' + key + ': ' + value.join(', ') + '</a></li>');
+    //Load range for our calendar
+    $.get(
+        $SCRIPT_ROOT + '/_get_info',
+        {},
+        function(data){
+            var first_date = new Date(data['first'] * 1000);
+            var last_date = new Date(data['last'] * 1000);
+            $('#datepicker').datepicker("option", "minDate", first_date);
+            $('#datepicker').datepicker("option", "maxDate", last_date);
         });
-
-        $('<ul/>', {
-            html: jids.join('')
-        }).appendTo('#byjid');
-
-        $(".jid").click(function(){
-            var jid = $(this).attr("id");
-            var index = -1;
-            for (i = 0; i < selected_jids.length; i++){
-                if (selected_jids[i] == jid)
-                    index = i;
-            }
-            if (index == -1){
-                selected_jids.push(jid);
-                $(this).css("color", "red");
-            } else {
-                selected_jids.splice(index, 1);
-                $(this).css("color", "blue");
-            }
-        });
-    });
     $("#go").click(function(){
-        json_request = {};
-        if ($("input[name=byjid]").attr("checked")){
-            json_request["jids"] = selected_jids;
-        }
-        if ($("input[name=bydate]").attr("checked")){
-            json_request["date"] = $("#datepicker").datepicker("getDate");
-        }
-
-        $.post(
+        date = $('#datepicker').datepicker('getDate');
+        month = date.getMonth() + 1;
+        if (month < 10)
+            month = '0' + month;
+        day = date.getDate();
+        if (day < 10)
+            day = '0' + day;
+        request_date = '' + date.getFullYear() + month + day;
+        $.get(
             $SCRIPT_ROOT + '/_get_stats',
-            { request: JSON.stringify(json_request)},
+            { 'date': request_date },
             function(data){
-                $("#stats").text("");
-                var tables = [];
-                $.each(data.stats, function(index, value){
-                    var table = ['<table><th colspan="1">' + value[0] + '</th>'];
-                    $.each(value[1], function(index, value){
-                        table.push('<tr><td class="left">' + data.jids[value[0]].join(', ') + '</td><td class="right">' + value[1] + '</td></tr>');
-                    });
-                    table.push('</table><br/>')
-                    tables.push(table.join(''));
+                $('div#stats').empty();
+                $('div#error').empty();
+                if (data['result'] == 'error'){
+                    $('div#error').append('<h1>Error while getting data</h1');
+                    $('div#error').append('<p>Error message: ' + data['message'] + '</p>');
+                    return;
+                }
+                table = $('<table id="#stats_table">');
+                table.append('<tr><th>Name</th><th>Online time</th></tr>');
+                $.each(data['data'], function(index, record){
+                    table.append('<tr><td>' + record[0] + '</td><td>' + record[1] + '</td></tr>');
                 });
-                $("#stats").html(tables.join(''));
+                $('div#stats').append(table);
             },
             "json");
     });
 });
-

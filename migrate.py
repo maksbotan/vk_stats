@@ -1,31 +1,29 @@
 #!/usr/bin/env python
 
-import sqlite3, json, time, re
+import os, re, json, time
 from datetime import datetime
-import os
 
 log_file_re = re.compile(r"log.json-(\d{4}-\d{2}-\d{2})")
 
-conn = sqlite3.connect("logs.db")
-cursor = conn.cursor()
+epoch = datetime(1970, 1, 1)
 
-seen_jids = []
-
-for log_file in sorted(os.listdir("logs")):
+for log_file in sorted(os.listdir("oldlogs")):
     match = log_file_re.match(log_file)
     if not match:
         continue
-    log_date = datetime.strptime(match.group(1), "%Y-%m-%d")
-    log_json = json.load(open(os.path.join("logs", log_file), "r"), encoding="utf-8")
+    log_date = match.group(1).replace("-", "")
+    try:
+        log_json = json.load(open(os.path.join("oldlogs", log_file), "r"), encoding="utf-8")
+    except:
+        print "Skipped", log_date
+        continue
+    new_log = {}
     for record in log_json:
-        online = datetime.strptime(record["online"].split(".")[0], "%H:%M:%S")
-        cursor.execute("INSERT INTO logs (jid, date, online) VALUES (?, ?, ?)",
-                       (record["jid"], log_date, online))
-        jid_pair = (record["jid"], unicode(record["name"]))
-        if not jid_pair in seen_jids:
-            cursor.execute("INSERT INTO jids (jid, name) VALUES (?, ?)",
-                           jid_pair)
-            seen_jids.append(jid_pair)
-
-conn.commit()
-conn.close()
+        jid = record["jid"]
+        del record["jid"]
+        online = time.strptime(record["online"].split(".")[0], "%H:%M:%S")
+        online = online.tm_hour * 3600 + online.tm_min * 60 + online.tm_sec
+        record["online"] = online
+        new_log[jid] = record
+    json.dump(new_log, open(os.path.join("logs", "log-{}.json".format(log_date)), "w"), encoding="utf-8")
+    print "Processed ", log_date

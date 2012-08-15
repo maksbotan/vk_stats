@@ -1,4 +1,5 @@
 *.swp
 *.pyc
 logs/
-logs.db
+oldlogs/
+*.tar.bz2
