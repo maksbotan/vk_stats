@@ -16,10 +16,7 @@ sleeklogger.setLevel(logging.DEBUG)
 ch = logging.StreamHandler()
 ch.setFormatter(fmt)
 ch.setLevel(logging.INFO)
-fh = logging.FileHandler('vk_bot.debug', 'w')
-fh.setFormatter(fmt)
 sleeklogger.addHandler(ch)
-sleeklogger.addHandler(fh)
 
 try:
     from gevent.monkey import patch_socket
@@ -138,10 +135,18 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Vkontakte bot')
     parser.add_argument('--logdir', help='Directory for storing logs', default='logs')
     parser.add_argument('-d', '--daemon', help='Daemonize', action='store_true', default=False)
+    parser.add_argument('--debug', help='Enable debug log', action='store_true', default=False)
     args = parser.parse_args()
 
     vk_id = raw_input('Vk id: ')
     vk_pass = getpass.getpass('Password: ')
+
+    if args.debug:
+        sleeklogger.setLevel(logging.DEBUG)
+        logger.setLevel(logging.DEBUG)
+        fh = logging.FileHandler('vk_bot.debug', 'w')
+        fh.setFormatter(fmt)
+        sleeklogger.addHandler(fh)
 
     xmpp = VkBot('{}@vk.com'.format(vk_id), vk_pass, args.logdir)
     if xmpp.connect():
