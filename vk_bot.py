@@ -117,7 +117,7 @@ class VkBot(sleekxmpp.ClientXMPP):
         new_log = {}
         for jid, entry in self.log.items():
             if entry['status'] == 'online':
-                entry['online'] += cur_time - entry['last_enter']
+                entry['online'] = 0
                 entry['last_enter'] = cur_time
                 new_log[jid] = entry
                 logger.debug('Online while rotating: {}'.format(entry['name']))
